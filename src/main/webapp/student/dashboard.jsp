@@ -1,17 +1,29 @@
-<%-- 
-    Document   : dashboard
-    Created on : May 4, 2026, 6:28:55 PM
-    Author     : MSI
---%>
+<%@ page import="model.User" %>
+<%
+    User user = (User) session.getAttribute("user");
 
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+    if(user == null){
+        response.sendRedirect("../login.jsp");
+        return;
+    }
+%>
+
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>JSP Page</title>
-    </head>
-    <body>
-        <h1>Hello Student!</h1>
-    </body>
+<head>
+    <title>Student Dashboard</title>
+</head>
+<body>
+
+<h1>Welcome, <%= user.getUsername() %></h1>
+
+<h3>Student Dashboard</h3>
+
+<ul>
+    <li><a href="${pageContext.request.contextPath}/books">Browse Books</a></li>
+    <li><a href="${pageContext.request.contextPath}/mybooks">My Borrowed Books</a></li>
+    <li><a href="../logout">Logout</a></li>
+</ul>
+
+</body>
 </html>
