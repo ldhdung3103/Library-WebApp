@@ -1,8 +1,6 @@
 USE library_management;
 
--- =========================
 -- USERS
--- =========================
 ALTER TABLE users
 MODIFY password VARCHAR(255);
 
@@ -25,9 +23,7 @@ ALTER TABLE users
 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ON UPDATE CURRENT_TIMESTAMP;
 
--- =========================
 -- BOOKS
--- =========================
 ALTER TABLE books
 ADD COLUMN IF NOT EXISTS publisher VARCHAR(100);
 
@@ -48,24 +44,18 @@ ALTER TABLE books
 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ON UPDATE CURRENT_TIMESTAMP;
 
--- =========================
 -- BORROW RECORDS
--- =========================
 ALTER TABLE borrow_records
 ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
--- =========================
 -- PENALTIES
--- =========================
 ALTER TABLE penalties
 ADD COLUMN IF NOT EXISTS payment_date DATE NULL;
 
 ALTER TABLE penalties
 ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
--- =========================
 -- ACTIVITY LOGS
--- =========================
 CREATE TABLE IF NOT EXISTS activity_logs (
     log_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NULL,
@@ -79,9 +69,7 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     ON UPDATE CASCADE
 );
 
--- =========================
 -- SAMPLE USERS
--- =========================
 INSERT IGNORE INTO users
 (username,password,full_name,email,role)
 VALUES
@@ -90,9 +78,7 @@ VALUES
 ('student1','123456','Nguyen Van A','student1@gmail.com','student'),
 ('student2','123456','Tran Thi B','student2@gmail.com','student');
 
--- =========================
 -- SAMPLE BOOKS
--- =========================
 INSERT IGNORE INTO books
 (title,author,publisher,publish_year,category,isbn,description,quantity,available_quantity)
 VALUES
