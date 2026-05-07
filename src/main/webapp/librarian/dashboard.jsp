@@ -1,17 +1,31 @@
-<%-- 
-    Document   : dashboard
-    Created on : May 4, 2026, 6:29:54 PM
-    Author     : MSI
---%>
-
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>JSP Page</title>
-    </head>
+<head>
+    <title>Librarian Dashboard</title>
+</head>
     <body>
-        <h1>Hello librarian!</h1>
+
+    <h2>Librarian Dashboard</h2>
+
+    <ul>
+        <li>
+            <a href="${pageContext.request.contextPath}/allborrows">
+                View Borrow Records
+            </a>
+        </li>
+
+        <li>
+            <a href="${pageContext.request.contextPath}/managebooks">
+                Manage Books
+            </a>
+        </li>
+
+        <li>
+            <a href="${pageContext.request.contextPath}/logout">
+                Logout
+            </a>
+        </li>
+    </ul>
+
     </body>
 </html>
