@@ -3,42 +3,25 @@ package dao;
 import utils.DBConnection;
 import java.sql.*;
 import java.util.*;
+
 import model.BorrowRecord;
 
 public class BorrowDAO {
 
+    // Student request borrow (status = pending)
     public boolean borrowBook(int userId, int bookId) {
 
-        String insertBorrow =
+        String sql =
             "INSERT INTO borrow_records(user_id, book_id, borrow_date, due_date, status) " +
-            "VALUES (?, ?, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 14 DAY), 'borrowed')";
+            "VALUES (?, ?, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 14 DAY), 'pending')";
 
-        String updateBook =
-            "UPDATE books SET available_quantity = available_quantity - 1 " +
-            "WHERE book_id = ? AND available_quantity > 0";
+        try(Connection conn = DBConnection.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        try(Connection conn = DBConnection.getConnection()) {
+            ps.setInt(1, userId);
+            ps.setInt(2, bookId);
 
-            conn.setAutoCommit(false);
-
-            PreparedStatement ps1 = conn.prepareStatement(updateBook);
-            ps1.setInt(1, bookId);
-
-            int updated = ps1.executeUpdate();
-
-            if(updated == 0){
-                conn.rollback();
-                return false;
-            }
-
-            PreparedStatement ps2 = conn.prepareStatement(insertBorrow);
-            ps2.setInt(1, userId);
-            ps2.setInt(2, bookId);
-
-            ps2.executeUpdate();
-
-            conn.commit();
-            return true;
+            return ps.executeUpdate() > 0;
 
         } catch(Exception e){
             e.printStackTrace();
@@ -46,7 +29,8 @@ public class BorrowDAO {
 
         return false;
     }
-    
+
+    // Student view borrowed books
     public List<BorrowRecord> getBorrowedBooks(int userId) {
 
         List<BorrowRecord> list = new ArrayList<>();
@@ -83,7 +67,8 @@ public class BorrowDAO {
 
         return list;
     }
-    
+
+    // Librarian view all requests
     public List<BorrowRecord> getAllBorrowRecords() {
 
         List<BorrowRecord> list = new ArrayList<>();
@@ -118,11 +103,86 @@ public class BorrowDAO {
 
         return list;
     }
-    
+
+    // Approve borrow request
+    public boolean approveBorrow(int borrowId) {
+        String checkSql =
+            "SELECT b.available_quantity " +
+            "FROM books b " +
+            "JOIN borrow_records br ON b.book_id = br.book_id " +
+            "WHERE br.borrow_id=?";
+
+        String updateBorrow =
+            "UPDATE borrow_records SET status='borrowed' WHERE borrow_id=?";
+
+        String updateBook =
+            "UPDATE books " +
+            "SET available_quantity = available_quantity - 1 " +
+            "WHERE book_id = (" +
+            "SELECT book_id FROM borrow_records WHERE borrow_id=?" +
+            ")";
+
+        try(Connection conn = DBConnection.getConnection()) {
+
+            conn.setAutoCommit(false);
+
+            PreparedStatement check = conn.prepareStatement(checkSql);
+            check.setInt(1, borrowId);
+
+            ResultSet rs = check.executeQuery();
+
+            if(rs.next()) {
+
+                int available = rs.getInt("available_quantity");
+
+                if(available <= 0){
+                    conn.rollback();
+                    return false;
+                }
+
+                PreparedStatement ps1 = conn.prepareStatement(updateBorrow);
+                ps1.setInt(1, borrowId);
+                ps1.executeUpdate();
+
+                PreparedStatement ps2 = conn.prepareStatement(updateBook);
+                ps2.setInt(1, borrowId);
+                ps2.executeUpdate();
+
+                conn.commit();
+                return true;
+            }
+
+            conn.rollback();
+
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    // Reject borrow request
+    public void rejectBorrow(int borrowId) {
+
+        String sql =
+            "UPDATE borrow_records SET status='rejected' WHERE borrow_id=?";
+
+        try(Connection conn = DBConnection.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, borrowId);
+            ps.executeUpdate();
+
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    // Return book
     public boolean returnBook(int borrowId) {
 
         String getBookId =
-            "SELECT book_id FROM borrow_records WHERE borrow_id = ?";
+            "SELECT book_id FROM borrow_records WHERE borrow_id=?";
 
         String updateBorrow =
             "UPDATE borrow_records " +
@@ -145,8 +205,11 @@ public class BorrowDAO {
 
             ResultSet rs = ps1.executeQuery();
 
-            if(rs.next()){
+            if(rs.next()) {
                 bookId = rs.getInt("book_id");
+            } else {
+                conn.rollback();
+                return false;
             }
 
             PreparedStatement ps2 = conn.prepareStatement(updateBorrow);
@@ -158,7 +221,6 @@ public class BorrowDAO {
             ps3.executeUpdate();
 
             conn.commit();
-
             return true;
 
         } catch(Exception e){
